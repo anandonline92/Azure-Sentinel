@@ -1,0 +1,40 @@
+## Query 1 
+----------------------------------------------------------------------------------------------------------
+This query joins the incident and security alerts table.
+
+SecurityIncident 
+| extend _AlertIds = tostring(AlertIds[0]) | join kind=inner ( SecurityAlert| search "Beatrice.Dilard") on $left._AlertIds == $right.SystemAlertId
+
+## Query 2
+----------------------------------------------------------------------------------------------------------
+This query initialize a private IP regex. After that check for outbound external/public IP communications from a set of internal "computers" 
+
+let PrivateIPregex = @'^127\.|^10\.|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-1]\.|^192\.168\.';
+let _computers = dynamic(["10.21.112.12", "10.21.112.40" , "10.21.112.17"]);
+SecurityEvent
+| union ( CommonSecurityLog)
+| where SourceIP in (_computers)
+| extend DestinationIPType = iff(DestinationIP matches regex PrivateIPregex,"private" ,"public" )
+| where DestinationIPType == "public"
+
+## Query 3
+----------------------------------------------------------------------------------------------------------
+This query creates a watchlist of malicious IPs part of Threat Advisory(TA). After that checks for sourceIPs for hits.
+
+let watchlist = _GetWatchlist('Malicious IPs_TA') | project MaliciousIP;
+ CommonSecurityLog
+ | union Syslog,AzureActivity
+ | where SourceIP in(watchlist) or HostIP in(watchlist)
+
+## Query 4
+----------------------------------------------------------------------------------------------------------
+This query checks for EPS utilisation which is billable.
+
+Usage 
+| where TimeGenerated > ago(31d)
+| where StartTime >= startofday(ago(31d)) and EndTime < startofday(now())
+| where IsBillable == true
+| summarize BillableDataGB = sum(Quantity) / 1000. by bin(StartTime, 1d)
+| render columnchart
+
+
