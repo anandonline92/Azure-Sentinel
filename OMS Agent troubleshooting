@@ -1,0 +1,31 @@
+
+>> Syslog omsagent restart 
+
+systemctl restart omsagent-c22b48ii0fe-856f-4c32-8f61
+tail -f /var/opt/microsoft/omsagent/log/omsagent.log
+
+=========================================================================
+>> Syslog omsagent start 
+
+systemctl status omsagent-c22b48880fe-856f-4c32-8f61-179
+tail -f /var/opt/microsoft/omsagent/log/omsagent.log
+
+=========================================================================
+
+Normal Syslog events if sending out from Firewall
+ tcpdump -nAS port 514  - To see if logs are received via port 514
+
+The Log Analytics agent listens for Syslog messages on the local client on port 25224. When the agent is installed, a default syslog configuration is applied and found in the following location:
+
+Rsyslog: cat /etc/rsyslog.d/95-omsagent.conf
+Syslog-ng: /etc/syslog-ng/syslog-ng.conf
+
+To see logs are send to Workspace - over port 25225, 25226
+sudo tcpdump -A -ni any port 25226 -vv
+sudo tcpdump -A -ni any port 25225 -vv
+
+
+=========================================================================
+
+OMSAgent configruation
+less /etc/opt/microsoft/omsagent/c22b40uuife-856f-4c3y2-8f/conf/omsadmin.conf
